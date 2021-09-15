@@ -45,7 +45,19 @@ class MusicPlayer:
 
         # Creating the frame for the buttons
         controls_frame = Frame(player_frame)
-        controls_frame.grid(row=2, column=0, pady=10)
+        controls_frame.grid(row=2, column=0, pady=5)
+
+        # Creating the sliding bar that moves along with the song
+        slider_frame = Frame(player_frame)  # , bd=2, relief=RIDGE for later
+        slider_frame.grid(row=1, column=0, pady=10)
+        self.start_time = Label(slider_frame, text='', bd=1)
+        self.end_time = Label(slider_frame, text='', bd=1)
+
+        self.my_slider = ttk.Scale(slider_frame, from_=0, to=100, orient=HORIZONTAL, value=0, command=self.slider, length=375)
+        self.my_slider.grid(row=0, column=1)
+        self.start_time.grid(row=0, column=0, padx=10)
+        self.end_time.grid(row=0, column=2, padx=10)
+
 
         # Images for the play, stop, pause, rewind, and forward buttons
         back_img = PhotoImage(file='Button_Images/backward.png')
@@ -84,13 +96,54 @@ class MusicPlayer:
             self.song_playlist.insert(END, song)  # inserts each song at the end of the playlist
 
     def remove_song(self):
-        pass
+        self.stop_music()
+        self.song_playlist.delete(ANCHOR)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
+        # consider adding: when song is deleted, highlight the next song to play and put it at the start of this function
 
     def remove_all_songs(self):
-        pass
+        self.stop_music()
+        self.song_playlist.delete(0, END)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
 
     def play_time(self):
-        pass
+
+        # Getting how long the current song has been playing for
+        current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
+        new_time = time.strftime('%M:#S', time.gmtime(current_time))  # formats the time from current_time
+
+        # Grabbing the current song
+        song = self.song_playlist.get(ACTIVE)
+        song = f'C:/Users/jjdun/Music/Music/{song}'
+
+        # Getting the length of each song
+        if '.mp3' in song:
+            song_duration = MP3(song)
+        elif '.wav' in song:
+            song_duration = WAVE(song)
+
+        self.song_length = song_duration.info.length  # gets the length of the current song (in seconds)
+        converted_song_length = time.strftime('%M:%S', time.gmtime(int(self.song_length)))  # converts the song length to 00:00 format
+
+        # Displaying the current time and total length of the song
+        # current_time += 1
+        if int(self.my_slider.get() == int(self.song_length)):  # this makes sure the start_time properly shows the end of the song when it matches the same time as the song length
+            self.start_time.config(text=f'{converted_song_length}')
+            self.end_time.config(text=f'{converted_song_length}')
+        elif self.play_state:  # if play_state is True, do not run the rest of this if statement
+            return
+        elif int(self.my_slider.get()) == int(current_time):
+            slider_position = int(self.song_length)
+            self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
+        else:
+            slider_position = int(self.song_length)
+            self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
+            new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get())))
+            self.start_time.config(text=f'{new_time}')
+            self.end_time.config(text=f'{converted_song_length}')
+            next_time = int(self.my_slider.get()) 
+            self.my_slider.config(value=next_time)
+
+        self.start_time.after(1000, self.play_time)
+
 
     def play_time2(self):
         pass
@@ -101,10 +154,11 @@ class MusicPlayer:
         mixer.music.load(song)  # loads selected song to be played
         mixer.music.play()  # plays the currently loaded song
 
+        self.play_time()
+
     def stop_music(self):
         mixer.music.stop()  # stops playing the current song
         self.song_playlist.selection_clear(ACTIVE)  # unselects the current selected song from the playlist
-
 
     def pause_music(self):
         if not self.play_state:  # if play_state is false, pause the selected song and switch it to True
@@ -132,7 +186,6 @@ class MusicPlayer:
         self.song_playlist.activate(next)  # highlights the currently playing song
         self.song_playlist.select_set(next, last=None)  # sets the active bar to the previous song
 
-
     def next_song(self):
         next = self.song_playlist.curselection()  # returns the index of the currently selected song as a tuple, this might also help with the random function (tkinter function)
         end_position = self.song_playlist.index(END)  # gets the index of the last song in the playlist
@@ -145,7 +198,6 @@ class MusicPlayer:
 
         song = self.song_playlist.get(next)
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
-        # print(song)
         mixer.music.load(song)
         mixer.music.play()
 
@@ -153,9 +205,13 @@ class MusicPlayer:
         self.song_playlist.activate(next)  # highlights the currently playing song
         self.song_playlist.select_set(next, last=None)  # sets the active bar to the previous song
 
+    def slider(self, x):
+        pass
+
     def shuffle(self):
-        # see if song_playlist can be printed after pressing play to see if it returns a list or tuple
-        # that tuple can then be randomized
+        # Use self.song_playlist.index(END) to get the last index of the playlist. Create a list from 0 to END then use the random module to out put those numbers into another list.
+        # To eliminate repeats until all songs are played, try making an if statement or while loop stating: if index is played, remove the value at that index and create a list that is one smaller
+        # if the size of the list = 0, create another list from 0 to END and randomize it then repeat the process
         pass
 
 
