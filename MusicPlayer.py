@@ -13,7 +13,7 @@ class MusicPlayer:
 
         # Creating the root window for the music player
         root = Tk()
-        root.geometry('540x450')
+        root.geometry('535x390')
         root.resizable(False, False)  # Prevents the music player window from being resized
         root.title('JD Music Player')
 
@@ -25,8 +25,8 @@ class MusicPlayer:
         player_frame.pack()
 
         # Creating the directory for the songs
-        self.song_playlist = Listbox(player_frame, bg='white', fg='black', width=80, selectbackground='gray', selectforeground='black')
-        self.song_playlist.grid(row=0, column=0)
+        self.song_playlist = Listbox(player_frame, bg='white', fg='black', width=70, selectbackground='gray', selectforeground='black')
+        self.song_playlist.grid(row=0, column=0, pady=10)
 
         # Creating the main menu on the root window
         song_menu = Menu(root)
@@ -43,22 +43,22 @@ class MusicPlayer:
         remove_song_menu.add_command(label='Remove Song from Playlist', command=self.remove_song)  # removes the selected song from the playlist
         remove_song_menu.add_command(label='Remove All Songs from Playlist', command=self.remove_all_songs)  # removes all songs from the playlist
 
-        # Creating the frame for the buttons
-        controls_frame = Frame(player_frame)
-        controls_frame.grid(row=2, column=0, pady=5)
-
-        # Creating the sliding bar that moves along with the song
-        slider_frame = Frame(player_frame)  # , bd=2, relief=RIDGE for later
+        # Creating the current song display and sliding bar that moves along with the song
+        slider_frame = Frame(player_frame)
         slider_frame.grid(row=1, column=0, pady=10)
         self.start_time = Label(slider_frame, text='', bd=1)
         self.end_time = Label(slider_frame, text='', bd=1)
 
         self.my_slider = ttk.Scale(slider_frame, from_=0, to=100, orient=HORIZONTAL, value=0, command=self.slider, length=375)
-        self.my_slider.grid(row=0, column=1)
-        self.start_time.grid(row=0, column=0, padx=10)
-        self.end_time.grid(row=0, column=2, padx=10)
+        self.my_slider.grid(row=1, column=1)
+        self.start_time.grid(row=1, column=0, padx=10)
+        self.end_time.grid(row=1, column=2, padx=10)
+        self.song_display = Label(slider_frame, text='')
+        self.song_display.grid(row=0, column=1)
 
-
+        # Creating the frame for the buttons
+        controls_frame = Frame(player_frame)
+        controls_frame.grid(row=2, column=0, pady=5)
 
         # Images for the play, stop, pause, rewind, and forward buttons
         back_img = PhotoImage(file='Button_Images/backward.png')
@@ -80,6 +80,18 @@ class MusicPlayer:
         play_button.grid(row=0, column=2, padx=5)
         pause_button.grid(row=0, column=3, padx=5)
         stop_button.grid(row=0, column=4, padx=5)
+
+        # Creating the frame for the volume slider
+        volume_frame = LabelFrame(player_frame, text="Volume")
+        volume_frame.grid(row=0, column=1, padx=3)
+
+        # Creating the volume slider
+        self.volume_slider = ttk.Scale(volume_frame, from_=1, to=0, orient=VERTICAL, value=1, command=self.volume)
+        self.volume_slider.pack(pady=5)
+
+        # Displaying the current volume level
+        self.volume_label = Label(volume_frame, text='')
+        self.volume_label.pack()
 
         self.stop_playing = False  # used to track when the status bar for the songs should stop updating
         self.play_state = False  # used to track when the song is in a paused or un-paused state
@@ -117,6 +129,7 @@ class MusicPlayer:
 
         # Grabbing the current song
         song = self.song_playlist.get(ACTIVE)
+        self.song_display.config(text=song)
         song = f'C:/Users/jjdun/Music/Music/{song}'
 
         # Getting the length of each song
@@ -255,6 +268,11 @@ class MusicPlayer:
 
         mixer.music.load(song)
         mixer.music.play(loops=0, start=int(self.my_slider.get()))  # starts playing the song at the current position of the slider
+
+    def volume(self, x):
+        mixer.music.set_volume(self.volume_slider.get())  # sets the volume to the current value of the volume slider
+        vol = mixer.music.get_volume() * 100  # gets the current volume level
+        self.volume_label.config(text=int(vol))
 
     def shuffle(self):
         # Use self.song_playlist.index(END) to get the last index of the playlist. Create a list from 0 to END then use the random module to output those numbers into another list.
