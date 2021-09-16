@@ -129,13 +129,14 @@ class MusicPlayer:
         converted_song_length = time.strftime('%M:%S', time.gmtime(int(self.song_length)))  # converts the song length to 00:00 format
 
         # Tracking to see if the position of the slider has been dragged
-        # current_time += 1  # adds 1 to current time since the slider is one second behind the song playing
+        current_time += 1  # adds 1 to current time since the slider is one second behind the song playing
         # print(int(self.my_slider.get()), int(current_time))
         if int(self.my_slider.get() == int(self.song_length)):  # this makes sure start_time properly shows the end of the song when it matches the same time as the song length
             self.start_time.config(text=f'{converted_song_length}')
             self.end_time.config(text=f'{converted_song_length}')
+            self.next_song()  # play the next song after the start time and end_time are the same
         elif self.play_state:  # if play_state is True, do not run the rest of this if statement so it so the bar doesn't move when the song is paused
-            return
+            pass
         elif int(self.my_slider.get()) == int(current_time):  # the slider is moving along with the song, the position of the slider has not been dragged yet
             slider_position = int(self.song_length)
             self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
@@ -152,11 +153,17 @@ class MusicPlayer:
         # Run the play_time function every second to move the slider with the song
         self.start_time.after(1000, self.play_time)
 
+        self.play_time_var = True  # prevents play_time from running more than once, causing the slider to skip by 2 seconds instead of 1
+
 
     def play_time2(self):
         pass
 
     def play_music(self):
+        # Make sure the song is considered un-paused and play_state is turned False
+        mixer.music.unpause()
+        self.play_state = False
+
         song = self.song_playlist.get(ACTIVE)  # grabs the currently selected song from the playlist
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adds the file path that was removed in the add_songs function so music.load() can find the song's path
         mixer.music.load(song)  # loads selected song to be played
@@ -164,7 +171,16 @@ class MusicPlayer:
 
         self.play_time()
 
+        if self.play_time_var:  # if True, reset the slider to 0 to prevent play_time from running 2x
+            self.my_slider.config(value=0)
+            self.play_time_var = False
+
     def stop_music(self):
+
+        # Make sure the song is considered un-paused and play_state is turned False
+        mixer.music.unpause()
+        self.play_state = False
+
         # Reset the slider and status bar
         self.my_slider.config(value=0)
         self.start_time.config(text='')
@@ -182,6 +198,13 @@ class MusicPlayer:
             self.play_state = False
 
     def back_music(self):
+        # Make sure the song is considered un-paused and play_state is turned False
+        mixer.music.unpause()
+        self.play_state = False
+
+        # Reset the slider and status bar
+        self.my_slider.config(value=0)
+
         next = self.song_playlist.curselection()  # returns the index of the currently selected song as a tuple, this might also help with the random function (tkinter function)
 
         if next[0] == 0:  # if next has an index of 0, skip to the last song of the playlist
@@ -200,6 +223,13 @@ class MusicPlayer:
         self.song_playlist.select_set(next, last=None)  # sets the active bar to the previous song
 
     def next_song(self):
+        # Make sure the song is considered un-paused and play_state is turned False
+        mixer.music.unpause()
+        self.play_state = False
+
+        # Reset the slider and status bar
+        self.my_slider.config(value=0)
+
         next = self.song_playlist.curselection()  # returns the index of the currently selected song as a tuple, this might also help with the random function (tkinter function)
         end_position = self.song_playlist.index(END)  # gets the index of the last song in the playlist
 
