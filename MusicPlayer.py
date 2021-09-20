@@ -5,15 +5,12 @@ import time
 from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 import tkinter.ttk as ttk
+import random
 
 
 class MusicPlayer:
 
     def __init__(self):
-        # if there is only one song, next and back button doesnt do anything.
-
-        # when slider is dragged, slider moves at double speed
-
 
         # Creating the root window for the music player
         root = Tk()
@@ -70,6 +67,7 @@ class MusicPlayer:
         play_img = PhotoImage(file='Button_Images/play.png')
         pause_img = PhotoImage(file='Button_Images/pause.png')
         stop_img = PhotoImage(file='Button_Images/stop.png')
+        shuffle_img = PhotoImage(file='Button_Images/shuffle.png')
 
         # Creating buttons for the player
         play_button = Button(controls_frame, image=play_img, borderwidth=0, command=self.play_music)
@@ -77,6 +75,7 @@ class MusicPlayer:
         pause_button = Button(controls_frame, image=pause_img, borderwidth=0, command=self.pause_music)
         back_button = Button(controls_frame, image=back_img, borderwidth=0, command=self.back_music)
         forward_button = Button(controls_frame, image=forward_img, borderwidth=0, command=self.next_song)
+        shuffle_button = Button(controls_frame, image=shuffle_img, borderwidth=0, command=self.shuffle)
 
         # Placing buttons on the controls_frame
         back_button.grid(row=0, column=0, padx=5)
@@ -84,6 +83,7 @@ class MusicPlayer:
         play_button.grid(row=0, column=2, padx=5)
         pause_button.grid(row=0, column=3, padx=5)
         stop_button.grid(row=0, column=4, padx=5)
+        shuffle_button.grid(row=1, column=2, pady=5)
 
         # Creating the frame for the volume slider
         volume_frame = LabelFrame(player_frame, text="Volume")
@@ -99,8 +99,9 @@ class MusicPlayer:
 
         self.stop_playing = False  # used to track when the status bar for the songs should stop updating
         self.pause_state = False  # used to track when the song is in a paused or un-paused state
-        self.play_time_var = False  # used to track when play_time is running so play_time2 can start
+        self.play_time_var = False  # used to track when play_time is running to prevent it from running multiple times
         self.song_length = None  # used to track the length of each song for the status bar
+        # self.playlist_length = None  # used to track the number of songs in the playlist
         # self.stopped = False
         # self.slider_label = Label(root, text='0')
         # self.slider_label.pack(pady=10)
@@ -120,15 +121,11 @@ class MusicPlayer:
         self.stop_music()
         self.song_playlist.delete(ANCHOR)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
 
-
     def remove_all_songs(self):
         self.stop_music()
         self.song_playlist.delete(0, END)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
 
     def play_time(self):
-
-        # if self.play_time_var:
-        #     return
 
         # Getting how long the current song has been playing for
         current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
@@ -172,12 +169,10 @@ class MusicPlayer:
             next_time = int(self.my_slider.get()) + 1  # convert the current position of the slider to an integer (status bars are initially floats)
             self.my_slider.config(value=next_time)  # change the current value of the slider to the newly dragged position
 
-
         # Run the play_time function every second to move the slider with the song
         self.start_time.after(1000, self.play_time)
 
         self.play_time_var = True  # prevents play_time from running more than once, causing the slider to skip by 2 seconds instead of 1
-
 
     def play_music(self):
         # Make sure the song is considered un-paused and play_state is turned False
@@ -200,7 +195,6 @@ class MusicPlayer:
         # self.play_time_var = True
         # if self.play_time_var:  # if True, reset the slider to 0 to prevent play_time from running 2x
 
-
     def stop_music(self):
 
         # Make sure the song is considered un-paused and play_state is turned False
@@ -214,6 +208,7 @@ class MusicPlayer:
 
         mixer.music.stop()  # stops playing the current song
         self.song_playlist.selection_clear(ACTIVE)  # unselects the current selected song from the playlist
+        self.song_display.config(text='')
 
     def pause_music(self):
         if not self.pause_state:  # if play_state is false, pause the selected song and switch it to True
@@ -239,9 +234,13 @@ class MusicPlayer:
         else:  # otherwise subtract 1 from the current index and get the song at that index
             next = next[0] - 1
 
+        # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
-        song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
-        mixer.music.load(song)
+        if 'C:/Users/jjdun/Music/Music/' in song:
+            mixer.music.load(song)
+        else:
+            song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
+            mixer.music.load(song)
         mixer.music.play()
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
@@ -265,9 +264,14 @@ class MusicPlayer:
         else:  # otherwise add 1 from the current index and get the song at that index
             next = next[0] + 1
 
+        # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
-        song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
-        mixer.music.load(song)
+        if 'C:/Users/jjdun/Music/Music/' in song:
+            mixer.music.load(song)
+        else:
+            song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
+            mixer.music.load(song)
+
         mixer.music.play()
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
@@ -275,31 +279,51 @@ class MusicPlayer:
         self.song_playlist.select_set(next, last=None)  # sets the active bar to the previous song
 
     def slider(self, x):
-        # self.slider_label.config(text=f'{int(self.my_slider.get())} of {int(self.song_length)}')  # temp label, remove when slider is fixed
-        # hold_position = int(self.my_slider.get())
-        # self.my_slider.config(value=hold_position)
-
+        # Make sure the song is considered un-paused and play_state is turned False
         mixer.music.unpause()
         self.pause_state = False
-        # self.play_time_var = True
+
         song = self.song_playlist.get(ACTIVE)  # gets the currently playing song
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
 
         mixer.music.load(song)
         mixer.music.play(loops=0, start=int(self.my_slider.get()))  # starts playing the song at the current position of the slider
         self.play_time_var = False
-        # self.play_time()
 
     def volume(self, x):
         mixer.music.set_volume(self.volume_slider.get())  # sets the volume to the current value of the volume slider
         vol = mixer.music.get_volume() * 100  # gets the current volume level
-        self.volume_label.config(text=int(vol))
+        self.volume_label.config(text=int(vol))  # displays the current volume level
 
     def shuffle(self):
-        # Use self.song_playlist.index(END) to get the last index of the playlist. Create a list from 0 to END then use the random module to output those numbers into another list.
-        # To eliminate repeats until all songs are played, try making an if statement or while loop stating: if number in list is played, remove that value at that index and create a list that is one smaller
-        # if the size of the list = 0, create another list from 0 to END and randomize it then repeat the process
-        pass
+        # Make sure the song is considered un-paused and play_state is turned False
+        mixer.music.unpause()
+        self.pause_state = False
+
+        # Creating a list of randomized indices
+        playlist_length = self.song_playlist.index(END)  # gets the index of the last song in the playlist
+        random_playlist = list(range(0, playlist_length))  # creates a list fom 0 to the last index of the playlist
+        random.shuffle(random_playlist)  # randomizes the list of indices
+
+        num_list = len(random_playlist) - 1
+
+        # Loop through indices, and grab each song associate with that index
+        for index in random_playlist:  # for each index in random_playlist
+            song = self.song_playlist.get(index)  # get the song associated with that index
+            self.song_playlist.insert(END, song)
+
+        self.song_playlist.delete(0, num_list)  # deletes the old playlist of songs to prevent duplicates
+
+        # Get the song in the 0 index and play it after the randomized playlist is created
+        next_song = self.song_playlist.get(0)
+        next_song = f'C:/Users/jjdun/Music/Music/{next_song}'
+        self.my_slider.config(value=0)  #
+        mixer.music.load(next_song)
+        mixer.music.play()
+
+        self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
+        self.song_playlist.activate(0)  # highlights the currently playing song
+        self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
 
 
 MusicPlayer()
