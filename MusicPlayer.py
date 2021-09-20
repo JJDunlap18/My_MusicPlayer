@@ -10,11 +10,15 @@ import tkinter.ttk as ttk
 class MusicPlayer:
 
     def __init__(self):
+        # if there is only one song, next and back button doesnt do anything.
+
+        # when slider is dragged, slider moves at double speed
+
 
         # Creating the root window for the music player
         root = Tk()
-        root.geometry('535x390')
-        root.resizable(False, False)  # Prevents the music player window from being resized
+        root.geometry('550x390')
+        root.resizable(True, False)  # Prevents the music player window from being resized
         root.title('JD Music Player')
 
         # Initialize the pygame mixer module
@@ -94,7 +98,7 @@ class MusicPlayer:
         self.volume_label.pack()
 
         self.stop_playing = False  # used to track when the status bar for the songs should stop updating
-        self.play_state = False  # used to track when the song is in a paused or un-paused state
+        self.pause_state = False  # used to track when the song is in a paused or un-paused state
         self.play_time_var = False  # used to track when play_time is running so play_time2 can start
         self.song_length = None  # used to track the length of each song for the status bar
         # self.slider_label = Label(root, text='0')
@@ -125,11 +129,11 @@ class MusicPlayer:
         # Getting how long the current song has been playing for
         current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
         # self.slider_label.config(text=f'Slider: {int(self.my_slider.get())} and Song pos: {int(current_time)}')
-        new_time = time.strftime('%M:#S', time.gmtime(current_time))  # formats the time from current_time
+        # new_time = time.strftime('%M:%S', time.gmtime(current_time))  # formats the time from current_time
 
         # Grabbing the current song
         song = self.song_playlist.get(ACTIVE)
-        self.song_display.config(text=song)
+        self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
         song = f'C:/Users/jjdun/Music/Music/{song}'
 
         # Getting the length of each song
@@ -148,16 +152,17 @@ class MusicPlayer:
             self.start_time.config(text=f'{converted_song_length}')
             self.end_time.config(text=f'{converted_song_length}')
             self.next_song()  # play the next song after the start time and end_time are the same
-        elif self.play_state:  # if play_state is True, do not run the rest of this if statement so it so the bar doesn't move when the song is paused
+        elif self.pause_state:  # if play_state is True, do not run the rest of this if statement so it so the bar doesn't move when the song is paused
             pass
         elif int(self.my_slider.get()) == int(current_time):  # the slider is moving along with the song, the position of the slider has not been dragged yet
             slider_position = int(self.song_length)
             self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
         else:  # if the slider has been dragged, change the current time of the song to the newly dragged position of the slider
+            # mixer.music.unpause()
+            # self.pause_state = False
             slider_position = int(self.song_length)
             self.my_slider.config(to=slider_position, value=int(self.my_slider.get()))  # the length of the slider bar will change to the length of the song
             new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get())))  # changes the current time of the song to the current position of the slider
-            # delay_new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get() - 1)))  # subtracts one since the slider initially started at 1 instead of 0
             self.start_time.config(text=f'{new_time}')  # display the new position of the slider as the current time of the song
             self.end_time.config(text=f'{converted_song_length}')
             next_time = int(self.my_slider.get()) + 1  # convert the current position of the slider to an integer (status bars are initially floats)
@@ -169,13 +174,10 @@ class MusicPlayer:
         self.play_time_var = True  # prevents play_time from running more than once, causing the slider to skip by 2 seconds instead of 1
 
 
-    def play_time2(self):
-        pass
-
     def play_music(self):
         # Make sure the song is considered un-paused and play_state is turned False
         mixer.music.unpause()
-        self.play_state = False
+        self.pause_state = False
 
         song = self.song_playlist.get(ACTIVE)  # grabs the currently selected song from the playlist
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adds the file path that was removed in the add_songs function so music.load() can find the song's path
@@ -192,7 +194,7 @@ class MusicPlayer:
 
         # Make sure the song is considered un-paused and play_state is turned False
         mixer.music.unpause()
-        self.play_state = False
+        self.pause_state = False
 
         # Reset the slider and status bar
         self.my_slider.config(value=0)
@@ -203,17 +205,17 @@ class MusicPlayer:
         self.song_playlist.selection_clear(ACTIVE)  # unselects the current selected song from the playlist
 
     def pause_music(self):
-        if not self.play_state:  # if play_state is false, pause the selected song and switch it to True
+        if not self.pause_state:  # if play_state is false, pause the selected song and switch it to True
             mixer.music.pause()
-            self.play_state = True
+            self.pause_state = True
         else:  # if play_state is True, unpause the selected song and switch it back to False
             mixer.music.unpause()
-            self.play_state = False
+            self.pause_state = False
 
     def back_music(self):
         # Make sure the song is considered un-paused and play_state is turned False
         mixer.music.unpause()
-        self.play_state = False
+        self.pause_state = False
 
         # Reset the slider and status bar
         self.my_slider.config(value=0)
@@ -238,7 +240,7 @@ class MusicPlayer:
     def next_song(self):
         # Make sure the song is considered un-paused and play_state is turned False
         mixer.music.unpause()
-        self.play_state = False
+        self.pause_state = False
 
         # Reset the slider and status bar
         self.my_slider.config(value=0)
@@ -263,6 +265,9 @@ class MusicPlayer:
 
     def slider(self, x):
         # self.slider_label.config(text=f'{int(self.my_slider.get())} of {int(self.song_length)}')  # temp label, remove when slider is fixed
+        self.pause_state = False
+        mixer.music.unpause()
+        # self.play_time_var = True
         song = self.song_playlist.get(ACTIVE)  # gets the currently playing song
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
 
