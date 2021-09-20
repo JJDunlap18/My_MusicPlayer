@@ -101,6 +101,7 @@ class MusicPlayer:
         self.pause_state = False  # used to track when the song is in a paused or un-paused state
         self.play_time_var = False  # used to track when play_time is running so play_time2 can start
         self.song_length = None  # used to track the length of each song for the status bar
+        # self.stopped = False
         # self.slider_label = Label(root, text='0')
         # self.slider_label.pack(pady=10)
 
@@ -125,6 +126,9 @@ class MusicPlayer:
         self.song_playlist.delete(0, END)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
 
     def play_time(self):
+
+        # if self.play_time_var:
+        #     return
 
         # Getting how long the current song has been playing for
         current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
@@ -168,6 +172,7 @@ class MusicPlayer:
             next_time = int(self.my_slider.get()) + 1  # convert the current position of the slider to an integer (status bars are initially floats)
             self.my_slider.config(value=next_time)  # change the current value of the slider to the newly dragged position
 
+
         # Run the play_time function every second to move the slider with the song
         self.start_time.after(1000, self.play_time)
 
@@ -176,6 +181,7 @@ class MusicPlayer:
 
     def play_music(self):
         # Make sure the song is considered un-paused and play_state is turned False
+        # self.play_time_var = False
         mixer.music.unpause()
         self.pause_state = False
 
@@ -184,11 +190,16 @@ class MusicPlayer:
         mixer.music.load(song)  # loads selected song to be played
         mixer.music.play()  # plays the currently loaded song
 
-        self.play_time()
-
-        if self.play_time_var:  # if True, reset the slider to 0 to prevent play_time from running 2x
+        if self.play_time_var:
             self.my_slider.config(value=0)
             self.play_time_var = False
+            # pass
+        else:
+            self.play_time()
+
+        # self.play_time_var = True
+        # if self.play_time_var:  # if True, reset the slider to 0 to prevent play_time from running 2x
+
 
     def stop_music(self):
 
@@ -265,14 +276,19 @@ class MusicPlayer:
 
     def slider(self, x):
         # self.slider_label.config(text=f'{int(self.my_slider.get())} of {int(self.song_length)}')  # temp label, remove when slider is fixed
-        self.pause_state = False
+        # hold_position = int(self.my_slider.get())
+        # self.my_slider.config(value=hold_position)
+
         mixer.music.unpause()
+        self.pause_state = False
         # self.play_time_var = True
         song = self.song_playlist.get(ACTIVE)  # gets the currently playing song
         song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
 
         mixer.music.load(song)
         mixer.music.play(loops=0, start=int(self.my_slider.get()))  # starts playing the song at the current position of the slider
+        self.play_time_var = False
+        # self.play_time()
 
     def volume(self, x):
         mixer.music.set_volume(self.volume_slider.get())  # sets the volume to the current value of the volume slider
