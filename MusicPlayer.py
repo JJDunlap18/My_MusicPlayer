@@ -132,8 +132,6 @@ class MusicPlayer:
 
         # Getting how long the current song has been playing for
         current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
-        # self.slider_label.config(text=f'Slider: {int(self.my_slider.get())} and Song pos: {int(current_time)}')
-        # new_time = time.strftime('%M:%S', time.gmtime(current_time))  # formats the time from current_time
 
         # Grabbing the current song
         song = self.song_playlist.get(ACTIVE)
@@ -142,7 +140,10 @@ class MusicPlayer:
 
         # Updating the playlist to scroll to the current song
         x = self.song_playlist.curselection()  # grabs the index of the current song
-        self.song_playlist.see(x)  # scrolls to the index of the current song
+        if self.pause_state or self.stop_playing:
+            pass
+        else:
+            self.song_playlist.see(x)  # scrolls to the index of the current song
 
         # Getting the length of each song
         if '.mp3' in song:
@@ -194,6 +195,7 @@ class MusicPlayer:
         mixer.music.load(song)  # loads selected song to be played
         mixer.music.play()  # plays the currently loaded song
 
+        # Makes sure not to run play time if there is already an instance running
         if self.play_time_var:
             self.my_slider.config(value=0)
             self.play_time_var = False
@@ -249,6 +251,7 @@ class MusicPlayer:
         else:
             song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
             mixer.music.load(song)
+
         mixer.music.play()
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
@@ -305,6 +308,7 @@ class MusicPlayer:
         self.volume_label.config(text=int(vol))  # displays the current volume level
 
     def shuffle(self):
+        # Make sure not to run shuffle if the music player has been stopped
         if self.stop_playing:
             return
 
@@ -317,13 +321,14 @@ class MusicPlayer:
         random_playlist = list(range(0, playlist_length))  # creates a list fom 0 to the last index of the playlist
         random.shuffle(random_playlist)  # randomizes the list of indices
 
-        num_list = len(random_playlist) - 1
+        num_list = len(random_playlist) - 1  # since lists start at 0, subtract 1 so the right amount of songs get deleted later in the code
 
         # Loop through indices, and grab each song associate with that index
         for index in random_playlist:  # for each index in random_playlist
             song = self.song_playlist.get(index)  # get the song associated with that index
             self.song_playlist.insert(END, song)
 
+        # Delete the previous order of songs
         self.song_playlist.delete(0, num_list)  # deletes the old playlist of songs to prevent duplicates
 
         # Get the song in the 0 index and play it after the randomized playlist is created
