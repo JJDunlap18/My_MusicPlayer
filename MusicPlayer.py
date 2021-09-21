@@ -153,7 +153,7 @@ class MusicPlayer:
 
         self.song_length = song_duration.info.length  # gets the length of the current song (in seconds)
         converted_song_length = time.strftime('%M:%S', time.gmtime(int(self.song_length)))  # converts the song length to 00:00 format
-        #
+
         # Tracking to see if the position of the slider has been dragged
         current_time += 1  # adds 1 to current time since the slider is one second behind the song playing
         # print(int(self.my_slider.get()), int(current_time))
