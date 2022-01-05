@@ -6,6 +6,10 @@ from mutagen.mp3 import MP3
 from mutagen.wave import WAVE
 import tkinter.ttk as ttk
 import random
+from tinytag import TinyTag
+import pandas as pd
+import os
+import openpyxl
 
 
 class MusicPlayer:
@@ -108,11 +112,93 @@ class MusicPlayer:
         self.pause_state = False  # used to track when the song is in a paused or un-paused state
         self.play_time_var = False  # used to track when play_time is running to prevent it from running multiple times
         self.song_length = None  # used to track the length of each song for the status bar
+        self.songArtists = []  # used to store the artist for each song
+        self.songGenres = []  # used to store the genre for each song
+        self.songTitles = []  # used to store the Title for each song
+        self.songPath = []  # used to store the path for each song
+        self.songFrame = None  # the dataframe containing the artist, genre, title, and path for each song
+        self.elist = []  # used to check if a song already exists within the dataframe to avoid duplicates
+        self.frameIndex = []
 
         root.mainloop()
 
+    def check_for_csv(self):
+        # path = os.walk('C:/Users/jjdun/Documents/Data Science Projects')
+        file = 'C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx'
+
+        if os.path.exists('C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx'):  # if the file exists in the given location, open that file and save it as a dataframe
+            self.songFrame = pd.read_excel(file)
+            # put conditional to check if songs in songframe already
+            for i in self.songFrame['Song Name']:
+                self.frameIndex.append(i)
+
+            self.songFrame.index = [self.frameIndex]
+            print(self.songFrame.shape)
+            for i in self.songFrame.loc[self.frameIndex, 'File Path']:
+                self.elist.append(i)
+        else:  # else, create an empty dataframe with the given column names
+            self.songFrame = pd.DataFrame(columns=['Song Name', 'Artist', 'Genre', 'File Path', 'Play Count'])
+            print(self.songFrame.shape)
+
+    def update_csv(self):
+        self.songFrame.to_excel('C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx', index=False)
+
+    def get_metadata(self, songs):
+        # Load and grab the metadata for each song in the playlist
+
+        for song in songs:  # Loops through each song in the playlist and adds the data to the corresponding list
+            if song in self.elist:  # checks to see if the song already exists within the dataframe
+                continue  # if it does exist, skip to the next song
+
+            # self.elist.append(song)
+            # Append the metadata for each song to the corresponding variable
+            self.songPath.append(song)
+            self.elist.append(song)
+            data = TinyTag.get(song)
+            self.songArtists.append(data.artist)
+            self.songGenres.append(data.genre)
+            # Removes the file path for each song before it is displayed in the playlist
+            song = song.replace('C:/Users/jjdun/Music/Music/', '')
+            self.songTitles.append(song)
+            # print(self.songTitles)
+        # Consolidate the above lists into a dictionary
+        songDict = {'Song Name': self.songTitles, 'Artist': self.songArtists, 'Genre': self.songGenres,
+                    'File Path': self.songPath, 'Play Count': 0}
+
+        # print(songDict)
+        # Turn that dictionary into a pandas dataframe
+        songDict = pd.DataFrame(songDict, index=self.songTitles)
+        # Add the song to the existing songFrame assuming it does not already exist within the dataframe
+        self.songFrame = self.songFrame.append(songDict, ignore_index=False)
+        # print(self.songFrame.head(8))
+        self.songArtists = []
+        self.songGenres = []
+        self.songTitles = []
+        self.songPath = []
+
+        print(self.songFrame.shape)
+
+        # if len(self.songTitles) != 0:
+        #     self.frameIndex.append(self.songTitles)
+        #     # self.frameIndex = tuple(self.frameIndex)
+        #     # self.songFrame.index = [self.frameIndex]
+
+        self.songFrame = self.songFrame.convert_dtypes()
+        # print(self.songFrame.shape)
+
+
+    def update_play_count(self, song):
+        # Updates the play count in the dataframe each time a song is played
+        song = song.replace('C:/Users/jjdun/Music/Music/', '')
+        self.songFrame.loc[song, 'Play Count'] += 1
+        print(self.songFrame['Play Count'])
+
     def add_songs(self):
         songs = filedialog.askopenfilenames(initialdir='C:/Users/jjdun/Music/Music', title='Choose a Song', filetypes=(('mp3 files', '*.mp3'), ('wav files', '*.wav')))  # these songs are stored in a tuple
+        if len(self.frameIndex) == 0:
+            self.check_for_csv()
+        self.get_metadata(songs)
+        # print(self.songFrame)
 
         # Removing the file path for each song before it is displayed in the playlist
         for song in songs:
@@ -134,7 +220,7 @@ class MusicPlayer:
         current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
 
         # Grabbing the current song
-        song = self.song_playlist.get(ACTIVE)
+        song = self.song_playlist.get(ACTIVE)  # ACTIVE here refers to what is highlighted in the playlist
         self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
         song = f'C:/Users/jjdun/Music/Music/{song}'
 
@@ -167,8 +253,6 @@ class MusicPlayer:
             slider_position = int(self.song_length)
             self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
         else:  # if the slider has been dragged, change the current time of the song to the newly dragged position of the slider
-            # mixer.music.unpause()
-            # self.pause_state = False
             slider_position = int(self.song_length)
             self.my_slider.config(to=slider_position, value=int(self.my_slider.get()))  # the length of the slider bar will change to the length of the song
             new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get())))  # changes the current time of the song to the current position of the slider
@@ -191,9 +275,12 @@ class MusicPlayer:
         self.pause_state = False
 
         song = self.song_playlist.get(ACTIVE)  # grabs the currently selected song from the playlist
-        song = f'C:/Users/jjdun/Music/Music/{song}'  # adds the file path that was removed in the add_songs function so music.load() can find the song's path
+
+        song = f'C:/Users/jjdun/Music/Music/{song}'
         mixer.music.load(song)  # loads selected song to be played
         mixer.music.play()  # plays the currently loaded song
+        self.update_play_count(song)
+        self.update_csv()
 
         # Makes sure not to run play time if there is already an instance running
         if self.play_time_var:
@@ -251,8 +338,8 @@ class MusicPlayer:
         else:
             song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
             mixer.music.load(song)
-
         mixer.music.play()
+        self.update_play_count(song)
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
         self.song_playlist.activate(next)  # highlights the currently playing song
@@ -285,6 +372,7 @@ class MusicPlayer:
             mixer.music.load(song)
 
         mixer.music.play()
+        self.update_play_count(song)
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
         self.song_playlist.activate(next)  # highlights the currently playing song
@@ -337,8 +425,10 @@ class MusicPlayer:
         self.my_slider.config(value=0)  # resets the slider position back to zero
         mixer.music.load(next_song)
         mixer.music.play()
+        self.update_play_count(song)
 
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
+
         self.song_playlist.activate(0)  # highlights the currently playing song
         self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
 
