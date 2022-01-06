@@ -119,6 +119,7 @@ class MusicPlayer:
         self.songFrame = None  # the dataframe containing the artist, genre, title, and path for each song
         self.elist = []  # used to check if a song already exists within the dataframe to avoid duplicates
         self.frameIndex = []
+        path = 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/'
 
         root.mainloop()
 
@@ -158,7 +159,7 @@ class MusicPlayer:
             self.songArtists.append(data.artist)
             self.songGenres.append(data.genre)
             # Removes the file path for each song before it is displayed in the playlist
-            song = song.replace('C:/Users/jjdun/Music/Music/', '')
+            song = song.replace('C:/Users/jjdun/Documents/Music for Recommendation/MP3s/', '')
             self.songTitles.append(song)
             # print(self.songTitles)
         # Consolidate the above lists into a dictionary
@@ -189,12 +190,12 @@ class MusicPlayer:
 
     def update_play_count(self, song):
         # Updates the play count in the dataframe each time a song is played
-        song = song.replace('C:/Users/jjdun/Music/Music/', '')
+        song = song.replace('C:/Users/jjdun/Documents/Music for Recommendation/MP3s/', '')
         self.songFrame.loc[song, 'Play Count'] += 1
         print(self.songFrame['Play Count'])
 
     def add_songs(self):
-        songs = filedialog.askopenfilenames(initialdir='C:/Users/jjdun/Music/Music', title='Choose a Song', filetypes=(('mp3 files', '*.mp3'), ('wav files', '*.wav')))  # these songs are stored in a tuple
+        songs = filedialog.askopenfilenames(initialdir='C:/Users/jjdun/Documents/Music for Recommendation/MP3s', title='Choose a Song', filetypes=(('mp3 files', '*.mp3'), ('wav files', '*.wav')))  # these songs are stored in a tuple
         if len(self.frameIndex) == 0:
             self.check_for_csv()
         self.get_metadata(songs)
@@ -202,7 +203,7 @@ class MusicPlayer:
 
         # Removing the file path for each song before it is displayed in the playlist
         for song in songs:
-            song = song.replace('C:/Users/jjdun/Music/Music/', '')  # this only works if the file path is the same every time, might consider a regular expression for more global uses
+            song = song.replace('C:/Users/jjdun/Documents/Music for Recommendation/MP3s/', '')  # this only works if the file path is the same every time, might consider a regular expression for more global uses
             self.song_playlist.insert(END, song)  # inserts each song at the end of the playlist
 
     def remove_song(self):
@@ -222,7 +223,7 @@ class MusicPlayer:
         # Grabbing the current song
         song = self.song_playlist.get(ACTIVE)  # ACTIVE here refers to what is highlighted in the playlist
         self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
-        song = f'C:/Users/jjdun/Music/Music/{song}'
+        song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'
 
         # Updating the playlist to scroll to the current song
         x = self.song_playlist.curselection()  # grabs the index of the current song
@@ -276,7 +277,7 @@ class MusicPlayer:
 
         song = self.song_playlist.get(ACTIVE)  # grabs the currently selected song from the playlist
 
-        song = f'C:/Users/jjdun/Music/Music/{song}'
+        song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'
         mixer.music.load(song)  # loads selected song to be played
         mixer.music.play()  # plays the currently loaded song
         self.update_play_count(song)
@@ -333,10 +334,10 @@ class MusicPlayer:
 
         # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
-        if 'C:/Users/jjdun/Music/Music/' in song:
+        if 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/' in song:
             mixer.music.load(song)
         else:
-            song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
+            song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'  # adding the file path back to the song
             mixer.music.load(song)
         mixer.music.play()
         self.update_play_count(song)
@@ -365,10 +366,10 @@ class MusicPlayer:
 
         # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
-        if 'C:/Users/jjdun/Music/Music/' in song:
+        if 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/' in song:
             mixer.music.load(song)
         else:
-            song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
+            song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'  # adding the file path back to the song
             mixer.music.load(song)
 
         mixer.music.play()
@@ -384,7 +385,7 @@ class MusicPlayer:
         self.pause_state = False
 
         song = self.song_playlist.get(ACTIVE)  # gets the currently playing song
-        song = f'C:/Users/jjdun/Music/Music/{song}'  # adding the file path back to the song
+        song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'  # adding the file path back to the song
 
         mixer.music.load(song)
         mixer.music.play(loops=0, start=int(self.my_slider.get()))  # starts playing the song at the current position of the slider
@@ -421,7 +422,7 @@ class MusicPlayer:
 
         # Get the song in the 0 index and play it after the randomized playlist is created
         next_song = self.song_playlist.get(0)
-        next_song = f'C:/Users/jjdun/Music/Music/{next_song}'
+        next_song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{next_song}'
         self.my_slider.config(value=0)  # resets the slider position back to zero
         mixer.music.load(next_song)
         mixer.music.play()
