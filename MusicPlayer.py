@@ -9,7 +9,10 @@ import random
 from tinytag import TinyTag
 import pandas as pd
 import os
-import openpyxl
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 class MusicPlayer:
@@ -79,6 +82,8 @@ class MusicPlayer:
         pause_img = PhotoImage(file='Button_Images/pause.png')
         stop_img = PhotoImage(file='Button_Images/stop.png')
         shuffle_img = PhotoImage(file='Button_Images/shuffle.png')
+        lyric_img = PhotoImage(file='Button_Images/lyrics.png')
+        artist_img = PhotoImage(file='Button_Images/artist.png')
 
         # Creating buttons for the player
         play_button = Button(controls_frame, image=play_img, borderwidth=0, command=self.play_music)
@@ -87,6 +92,8 @@ class MusicPlayer:
         back_button = Button(controls_frame, image=back_img, borderwidth=0, command=self.back_music)
         forward_button = Button(controls_frame, image=forward_img, borderwidth=0, command=self.next_song)
         shuffle_button = Button(controls_frame, image=shuffle_img, borderwidth=0, command=self.shuffle)
+        lyrics_rec_button = Button(controls_frame, image=lyric_img, borderwidth=0, command=self.get_lyrics_recommendations)
+        artist_rec_button = Button(controls_frame, image=artist_img, borderwidth=0, command=self.get_artist_and_genre_recommendation)
 
         # Placing buttons on the controls_frame
         back_button.grid(row=0, column=0, padx=5)
@@ -95,6 +102,8 @@ class MusicPlayer:
         pause_button.grid(row=0, column=3, padx=5)
         stop_button.grid(row=0, column=4, padx=5)
         shuffle_button.grid(row=1, column=2, pady=5)
+        lyrics_rec_button.grid(row=1, column=1, pady=5)
+        artist_rec_button.grid(row=1, column=3, pady=5)
 
         # Creating the frame for the volume slider
         volume_frame = LabelFrame(player_frame, text="Volume")
@@ -119,9 +128,45 @@ class MusicPlayer:
         self.songFrame = None  # the dataframe containing the artist, genre, title, and path for each song
         self.elist = []  # used to check if a song already exists within the dataframe to avoid duplicates
         self.frameIndex = []
-        path = 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/'
 
         root.mainloop()
+
+    def get_lyrics_recommendations(self):
+        song = self.song_playlist.get(ACTIVE)
+        songframe = self.songFrame
+        songframe = songframe.reset_index()
+
+        # Converts Lyrics to a string
+        songframe['Lyrics'] = songframe['Lyrics'].astype(str)
+        # Replaces all NaN values with an empty string
+        songframe['Lyrics'] = songframe['Lyrics'].fillna('')
+
+        # Define a TF-IDF Vectorizer Object, removes all english stop words
+        tfidf = TfidfVectorizer(stop_words='english')
+        # Creates a TF-IDF matrix by fitting and transforming the data
+        tfidf_matrix = tfidf.fit_transform(songframe['Lyrics'])
+        # Calculates the numeric quantity that denotes the similarity between two songs
+        cosine_sim = linear_kernel(tfidf_matrix, tfidf_matrix)
+        indices = pd.Series(songframe.index, index=songframe['Song Name'])
+
+        # Gets the index of the song that matches the song name
+        idx = indices[song]
+
+        # Get the pairwise similarity scores of all songs with that song
+        sim_scores = list(enumerate(cosine_sim[idx]))
+        # Sort the songs based on similarity scores
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        # Return the 30 most similar scores
+        sim_scores = sim_scores[1:31]
+        self.stop_music()
+        self.song_playlist.delete(0, END)
+        song_indices = [i[0] for i in sim_scores]
+
+        for name in song_indices:
+            self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
+
+    def get_artist_and_genre_recommendation(self):
+        pass
 
     def check_for_csv(self):
         # path = os.walk('C:/Users/jjdun/Documents/Data Science Projects')
@@ -135,10 +180,11 @@ class MusicPlayer:
 
             self.songFrame.index = [self.frameIndex]
             print(self.songFrame.shape)
+            print(self.frameIndex)
             for i in self.songFrame.loc[self.frameIndex, 'File Path']:
                 self.elist.append(i)
         else:  # else, create an empty dataframe with the given column names
-            self.songFrame = pd.DataFrame(columns=['Song Name', 'Artist', 'Genre', 'File Path', 'Play Count'])
+            self.songFrame = pd.DataFrame(columns=['Song Name', 'Artist', 'Genre', 'File Path', 'Play Count', 'Lyrics'])
             print(self.songFrame.shape)
 
     def update_csv(self):
@@ -164,7 +210,7 @@ class MusicPlayer:
             # print(self.songTitles)
         # Consolidate the above lists into a dictionary
         songDict = {'Song Name': self.songTitles, 'Artist': self.songArtists, 'Genre': self.songGenres,
-                    'File Path': self.songPath, 'Play Count': 0}
+                    'File Path': self.songPath, 'Play Count': 0, 'Lyrics': ''}
 
         # print(songDict)
         # Turn that dictionary into a pandas dataframe
@@ -177,16 +223,8 @@ class MusicPlayer:
         self.songTitles = []
         self.songPath = []
 
-        print(self.songFrame.shape)
-
-        # if len(self.songTitles) != 0:
-        #     self.frameIndex.append(self.songTitles)
-        #     # self.frameIndex = tuple(self.frameIndex)
-        #     # self.songFrame.index = [self.frameIndex]
-
         self.songFrame = self.songFrame.convert_dtypes()
         # print(self.songFrame.shape)
-
 
     def update_play_count(self, song):
         # Updates the play count in the dataframe each time a song is played
