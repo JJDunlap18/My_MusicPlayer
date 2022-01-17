@@ -166,7 +166,48 @@ class MusicPlayer:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
 
     def get_artist_and_genre_recommendation(self):
-        pass
+        song = self.song_playlist.get(ACTIVE)
+        songframe = self.songFrame
+        songframe = songframe.reset_index()
+        features = ['Artist', 'Genre']
+
+        for feature in features:
+            songframe[feature] = songframe[feature].apply(self.clean_data)
+
+        songframe['soup'] = songframe.apply(self.create_soup, axis=1)
+
+        count = CountVectorizer(stop_words='english')
+        count_matrix = count.fit_transform(songframe['soup'])
+
+        cosine_sim = cosine_similarity(count_matrix, count_matrix)
+
+        songframe = songframe.reset_index()
+        indices = pd.Series(songframe.index, index=songframe['Song Name'])
+
+        # Gets the index of the song that matches the song name
+        idx = indices[song]
+
+        # Get the pairwise similarity scores of all songs with that song
+        sim_scores = list(enumerate(cosine_sim[idx]))
+        # Sort the songs based on similarity scores
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+        # Return the 30 most similar scores
+        sim_scores = sim_scores[1:31]
+        self.stop_music()
+        self.song_playlist.delete(0, END)
+        song_indices = [i[0] for i in sim_scores]
+
+        for name in song_indices:
+            self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
+
+    def clean_data(self, frame):
+        if isinstance(frame, str):
+            return str.lower(frame.replace(' ', ''))
+        else:
+            return ''
+
+    def create_soup(self, frame):
+        return ''.join(frame['Artist']) + ' ' + ''.join(frame['Genre'])
 
     def check_for_csv(self):
         # path = os.walk('C:/Users/jjdun/Documents/Data Science Projects')
