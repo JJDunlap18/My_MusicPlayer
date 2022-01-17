@@ -166,6 +166,7 @@ class MusicPlayer:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
 
     def get_artist_and_genre_recommendation(self):
+
         song = self.song_playlist.get(ACTIVE)
         songframe = self.songFrame
         songframe = songframe.reset_index()
@@ -279,7 +280,7 @@ class MusicPlayer:
             self.check_for_csv()
         self.get_metadata(songs)
         # print(self.songFrame)
-
+        self.play_time_var = False
         # Removing the file path for each song before it is displayed in the playlist
         for song in songs:
             song = song.replace('C:/Users/jjdun/Documents/Music for Recommendation/MP3s/', '')  # this only works if the file path is the same every time, might consider a regular expression for more global uses
@@ -292,59 +293,63 @@ class MusicPlayer:
 
     def remove_all_songs(self):
         self.stop_music()
+        # self.song_playlist.selection_clear(ACTIVE)  # unselects the current selected song from the playlist
         self.song_playlist.delete(0, END)  # removes the currently selected song from the playlist (if a song is selected, that song is considered anchored)
 
     def play_time(self):
 
-        # Getting how long the current song has been playing for
-        current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
-
-        # Grabbing the current song
-        song = self.song_playlist.get(ACTIVE)  # ACTIVE here refers to what is highlighted in the playlist
-        self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
-        song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'
-
-        # Updating the playlist to scroll to the current song
-        x = self.song_playlist.curselection()  # grabs the index of the current song
-        if self.pause_state or self.stop_playing:
+        if self.song_playlist.get(ACTIVE) == '':
             pass
         else:
-            self.song_playlist.see(x)  # scrolls to the index of the current song
+            # Getting how long the current song has been playing for
+            current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
 
-        # Getting the length of each song
-        if '.mp3' in song:
-            song_duration = MP3(song)
-        elif '.wav' in song:
-            song_duration = WAVE(song)
+            # Grabbing the current song
+            song = self.song_playlist.get(ACTIVE)  # ACTIVE here refers to what is highlighted in the playlist
+            # self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
+            song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'
 
-        self.song_length = song_duration.info.length  # gets the length of the current song (in seconds)
-        converted_song_length = time.strftime('%M:%S', time.gmtime(int(self.song_length)))  # converts the song length to 00:00 format
+            # Updating the playlist to scroll to the current song
+            # x = self.song_playlist.curselection()  # grabs the index of the current song
+            # if self.pause_state or self.stop_playing:
+            #     pass
+            # else:
+            #     self.song_playlist.see(x)  # scrolls to the index of the current song
 
-        # Tracking to see if the position of the slider has been dragged
-        current_time += 1  # adds 1 to current time since the slider is one second behind the song playing
-        # print(int(self.my_slider.get()), int(current_time))
-        if int(self.my_slider.get() == int(self.song_length)):  # this makes sure start_time properly shows the end of the song when it matches the same time as the song length
-            self.start_time.config(text=f'{converted_song_length}')
-            self.end_time.config(text=f'{converted_song_length}')
-            self.next_song()  # play the next song after the start time and end_time are the same
-        elif self.pause_state:  # if play_state is True, do not run the rest of this if statement so it so the bar doesn't move when the song is paused
-            pass
-        elif int(self.my_slider.get()) == int(current_time):  # the slider is moving along with the song, the position of the slider has not been dragged yet
-            slider_position = int(self.song_length)
-            self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
-        else:  # if the slider has been dragged, change the current time of the song to the newly dragged position of the slider
-            slider_position = int(self.song_length)
-            self.my_slider.config(to=slider_position, value=int(self.my_slider.get()))  # the length of the slider bar will change to the length of the song
-            new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get())))  # changes the current time of the song to the current position of the slider
-            self.start_time.config(text=f'{new_time}')  # display the new position of the slider as the current time of the song
-            self.end_time.config(text=f'{converted_song_length}')
-            next_time = int(self.my_slider.get()) + 1  # convert the current position of the slider to an integer (status bars are initially floats)
-            self.my_slider.config(value=next_time)  # change the current value of the slider to the newly dragged position
+            # Getting the length of each song
+            if '.mp3' in song:
+                song_duration = MP3(song)
+            elif '.wav' in song:
+                song_duration = WAVE(song)
 
-        # Run the play_time function every second to move the slider with the song
-        self.start_time.after(1000, self.play_time)
+            self.song_length = song_duration.info.length  # gets the length of the current song (in seconds)
+            converted_song_length = time.strftime('%M:%S', time.gmtime(int(self.song_length)))  # converts the song length to 00:00 format
 
-        self.play_time_var = True  # prevents play_time from running more than once, causing the slider to skip by 2 seconds instead of 1
+            # Tracking to see if the position of the slider has been dragged
+            current_time += 1  # adds 1 to current time since the slider is one second behind the song playing
+            # print(int(self.my_slider.get()), int(current_time))
+            if int(self.my_slider.get() == int(self.song_length)):  # this makes sure start_time properly shows the end of the song when it matches the same time as the song length
+                self.start_time.config(text=f'{converted_song_length}')
+                self.end_time.config(text=f'{converted_song_length}')
+                self.next_song()  # play the next song after the start time and end_time are the same
+            elif self.pause_state:  # if play_state is True, do not run the rest of this if statement so it so the bar doesn't move when the song is paused
+                pass
+            elif int(self.my_slider.get()) == int(current_time):  # the slider is moving along with the song, the position of the slider has not been dragged yet
+                slider_position = int(self.song_length)
+                self.my_slider.config(to=slider_position, value=int(current_time))  # the length of the slider bar will change to the length of the song
+            else:  # if the slider has been dragged, change the current time of the song to the newly dragged position of the slider
+                slider_position = int(self.song_length)
+                self.my_slider.config(to=slider_position, value=int(self.my_slider.get()))  # the length of the slider bar will change to the length of the song
+                new_time = time.strftime('%M:%S', time.gmtime(int(self.my_slider.get())))  # changes the current time of the song to the current position of the slider
+                self.start_time.config(text=f'{new_time}')  # display the new position of the slider as the current time of the song
+                self.end_time.config(text=f'{converted_song_length}')
+                next_time = int(self.my_slider.get()) + 1  # convert the current position of the slider to an integer (status bars are initially floats)
+                self.my_slider.config(value=next_time)  # change the current value of the slider to the newly dragged position
+
+            # Run the play_time function every second to move the slider with the song
+            self.start_time.after(1000, self.play_time)
+
+            self.play_time_var = True  # prevents play_time from running more than once, causing the slider to skip by 2 seconds instead of 1
 
     def play_music(self):
         # Turn stop_playing back to False so the shuffle button can be used
@@ -355,6 +360,7 @@ class MusicPlayer:
         self.pause_state = False
 
         song = self.song_playlist.get(ACTIVE)  # grabs the currently selected song from the playlist
+        self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
 
         song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{song}'
         mixer.music.load(song)  # loads selected song to be played
@@ -411,8 +417,14 @@ class MusicPlayer:
         else:  # otherwise subtract 1 from the current index and get the song at that index
             next = next[0] - 1
 
+        if self.pause_state or self.stop_playing:
+            pass
+        else:
+            self.song_playlist.see(next)  # scrolls to the index of the current song
+
         # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
+        self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
         if 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/' in song:
             mixer.music.load(song)
         else:
@@ -443,8 +455,14 @@ class MusicPlayer:
         else:  # otherwise add 1 from the current index and get the song at that index
             next = next[0] + 1
 
+        if self.pause_state or self.stop_playing:
+            pass
+        else:
+            self.song_playlist.see(next)  # scrolls to the index of the current song
+
         # Prevents the song path from being added 2x due to the shuffle function
         song = self.song_playlist.get(next)
+        self.song_display.config(text=song, font=('Arial', 11))  # displays the current song above the slider
         if 'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/' in song:
             mixer.music.load(song)
         else:
@@ -501,6 +519,7 @@ class MusicPlayer:
 
         # Get the song in the 0 index and play it after the randomized playlist is created
         next_song = self.song_playlist.get(0)
+        self.song_display.config(text=next_song, font=('Arial', 11))  # displays the current song above the slider
         next_song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{next_song}'
         self.my_slider.config(value=0)  # resets the slider position back to zero
         mixer.music.load(next_song)
