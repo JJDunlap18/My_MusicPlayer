@@ -165,6 +165,18 @@ class MusicPlayer:
         for name in song_indices:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
 
+        # Get the song in the 0 index and play it after the randomized playlist is created
+        next_song = self.song_playlist.get(0)
+        self.song_display.config(text=next_song, font=('Arial', 11))  # displays the current song above the slider
+        next_song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{next_song}'
+        self.my_slider.config(value=0)  # resets the slider position back to zero
+        mixer.music.load(next_song)
+        mixer.music.play()
+        self.update_play_count(song)
+        self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
+        self.song_playlist.activate(0)  # highlights the currently playing song
+        self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
+
     def get_artist_and_genre_recommendation(self):
 
         song = self.song_playlist.get(ACTIVE)
@@ -200,6 +212,19 @@ class MusicPlayer:
 
         for name in song_indices:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
+
+        # Get the song in the 0 index and play it after the randomized playlist is created
+        next_song = self.song_playlist.get(0)
+        self.song_display.config(text=next_song, font=('Arial', 11))  # displays the current song above the slider
+        next_song = f'C:/Users/jjdun/Documents/Music for Recommendation/MP3s/{next_song}'
+        self.my_slider.config(value=0)  # resets the slider position back to zero
+        mixer.music.load(next_song)
+        mixer.music.play()
+        self.update_play_count(song)
+        self.song_playlist.selection_clear(0,
+                                           END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
+        self.song_playlist.activate(0)  # highlights the currently playing song
+        self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
 
     def clean_data(self, frame):
         if isinstance(frame, str):
