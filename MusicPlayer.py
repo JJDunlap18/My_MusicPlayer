@@ -9,10 +9,8 @@ import random
 from tinytag import TinyTag
 import pandas as pd
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.metrics.pairwise import linear_kernel, cosine_similarity
 
 
 class MusicPlayer:
@@ -221,6 +219,7 @@ class MusicPlayer:
         for name in song_indices:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
 
+        # Print out the similarity score for each song
         song_and_score = []
         for i in sim_scores:
             song_and_score.append((songframe['Song Name'].loc[i[0]], i[1]))
@@ -337,10 +336,10 @@ class MusicPlayer:
 
     def play_time(self):
 
-        if self.song_playlist.get(ACTIVE) == '':
+        if self.song_playlist.get(ACTIVE) == '':  # prevents the playtime function from running if the playlist is empty
             pass
         else:
-            # Getting how long the current song has been playing for
+            # Getting the length of the current song
             current_time = mixer.music.get_pos()/1000  # gets how long the current song has been playing for (in milliseconds)
 
             # Grabbing the current song
