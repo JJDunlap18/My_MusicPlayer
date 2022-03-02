@@ -3,13 +3,14 @@
 - After gaining experience in Data Science, I decided to build upon this project by adding a Recommendation System based on Natural Language Processing. After extracting and storing the metadata from each song, the playlist is then organized by either similarity in the lyrics, or by artist and genre with the selected song.
 - 244 songs from various artists and genres were used to test the recommendation features of the Music Player, with a similarity score being outputted so the user can compare the similarities between different songs
 
-## Main Python Packages Used
+## Main Python Packages and Tools Used
 - tkinter (GUI)
 - pygame (primary music player functions such as pause, play, stop and skip)
 - scikit-learn (calculating Term Frequency-Inverse Document Frequence and cosine similarity for recommender system)
 - pandas (storing metadata in an excel format)
 - tinytag (extracting metadata from songs)
 - mutagen (manipulating .mp3 and .wav files)
+- Genius API (get lyrics for most songs)
 
 ## Music Player Interface and Features
 
@@ -24,5 +25,5 @@ The image above shows the music player interface with its different features. Th
 
 ![Music Player 2](https://user-images.githubusercontent.com/74473048/156454290-f0ea47d7-541d-4390-acce-c2c05646fe31.JPG)
 
-![Similarity Scores](https://user-images.githubusercontent.com/74473048/156454305-babda920-2b31-4107-9e26-22f5014c22da.JPG)
+![Similarity Scores](https://user-images.githubusercontent.com/74473048/156454526-2034bcb6-9316-4623-ab02-3e52aaaff5df.JPG)
 
