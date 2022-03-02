@@ -154,16 +154,23 @@ class MusicPlayer:
 
         # Get the pairwise similarity scores of all songs with that song
         sim_scores = list(enumerate(cosine_sim[idx]))
+
         # Sort the songs based on similarity scores
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        # Return the 30 most similar scores
-        sim_scores = sim_scores[1:31]
+
+        # Return the songs in order of similarity score
+        # sim_scores = sim_scores[1:]
         self.stop_music()
         self.song_playlist.delete(0, END)
         song_indices = [i[0] for i in sim_scores]
 
         for name in song_indices:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
+
+        song_and_score = []
+        for i in sim_scores:
+            song_and_score.append((songframe['Song Name'].loc[i[0]], i[1]))
+        print(song_and_score)
 
         # Get the song in the 0 index and play it after the randomized playlist is created
         next_song = self.song_playlist.get(0)
@@ -176,6 +183,7 @@ class MusicPlayer:
         self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
         self.song_playlist.activate(0)  # highlights the currently playing song
         self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
+
 
     def get_artist_and_genre_recommendation(self):
 
@@ -204,14 +212,19 @@ class MusicPlayer:
         sim_scores = list(enumerate(cosine_sim[idx]))
         # Sort the songs based on similarity scores
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-        # Return the 30 most similar scores
-        sim_scores = sim_scores[1:31]
+        # Return the songs in order of similarity score
+        # sim_scores = sim_scores[1:31]
         self.stop_music()
         self.song_playlist.delete(0, END)
         song_indices = [i[0] for i in sim_scores]
 
         for name in song_indices:
             self.song_playlist.insert(END, songframe['Song Name'].loc[name])  # inserts each song at the end of the playlist
+
+        song_and_score = []
+        for i in sim_scores:
+            song_and_score.append((songframe['Song Name'].loc[i[0]], i[1]))
+        print(song_and_score)
 
         # Get the song in the 0 index and play it after the randomized playlist is created
         next_song = self.song_playlist.get(0)
@@ -221,8 +234,7 @@ class MusicPlayer:
         mixer.music.load(next_song)
         mixer.music.play()
         self.update_play_count(song)
-        self.song_playlist.selection_clear(0,
-                                           END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
+        self.song_playlist.selection_clear(0, END)  # clears the active cursor in the playlist (the 0, END means clear any selected bar from the 1st song to the last song)
         self.song_playlist.activate(0)  # highlights the currently playing song
         self.song_playlist.select_set(0, last=None)  # sets the active bar to the previous song
 
@@ -237,25 +249,25 @@ class MusicPlayer:
 
     def check_for_csv(self):
         # path = os.walk('C:/Users/jjdun/Documents/Data Science Projects')
-        file = 'C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx'
+        file = 'C:/Users/jjdun/Documents/Data_Science_Projects/music_metadata.xlsx'
 
-        if os.path.exists('C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx'):  # if the file exists in the given location, open that file and save it as a dataframe
+        if os.path.exists('C:/Users/jjdun/Documents/Data_Science_Projects/music_metadata.xlsx'):  # if the file exists in the given location, open that file and save it as a dataframe
             self.songFrame = pd.read_excel(file)
             # put conditional to check if songs in songframe already
             for i in self.songFrame['Song Name']:
                 self.frameIndex.append(i)
 
             self.songFrame.index = [self.frameIndex]
-            print(self.songFrame.shape)
-            print(self.frameIndex)
+            # print(self.songFrame.shape)
+            # print(self.frameIndex)
             for i in self.songFrame.loc[self.frameIndex, 'File Path']:
                 self.elist.append(i)
         else:  # else, create an empty dataframe with the given column names
             self.songFrame = pd.DataFrame(columns=['Song Name', 'Artist', 'Genre', 'File Path', 'Play Count', 'Lyrics'])
-            print(self.songFrame.shape)
+            # print(self.songFrame.shape)
 
     def update_csv(self):
-        self.songFrame.to_excel('C:/Users/jjdun/Documents/Data Science Projects/music_metadata.xlsx', index=False)
+        self.songFrame.to_excel('C:/Users/jjdun/Documents/Data_Science_Projects/music_metadata.xlsx', index=False)
 
     def get_metadata(self, songs):
         # Load and grab the metadata for each song in the playlist
@@ -295,9 +307,11 @@ class MusicPlayer:
 
     def update_play_count(self, song):
         # Updates the play count in the dataframe each time a song is played
+        # This function is in place in case I wanted to try a rating based recommender
+        # The current iteration of the recommender does not
         song = song.replace('C:/Users/jjdun/Documents/Music for Recommendation/MP3s/', '')
         self.songFrame.loc[song, 'Play Count'] += 1
-        print(self.songFrame['Play Count'])
+        # print(self.songFrame['Play Count'])
 
     def add_songs(self):
         songs = filedialog.askopenfilenames(initialdir='C:/Users/jjdun/Documents/Music for Recommendation/MP3s', title='Choose a Song', filetypes=(('mp3 files', '*.mp3'), ('wav files', '*.wav')))  # these songs are stored in a tuple
