@@ -4,9 +4,9 @@ import numpy as np
 from requests.exceptions import Timeout
 
 # Copy the key and token for the Genius API
-client_id = 'jql-_AVpggl7rZfNg04BdxYXJWOeKAIkFS1D-gni59K85K2fJjP7YtCCzJoFnbQk'
-client_secret = '2yZmQ-yItE-cPNIIsbISRVhIEewLUA6VlqQyl49oB9nt0Y7Wllx_mRZCYYOGTVPnxZ0G6W6_-hSnrW61VrfB0A'
-token = 'eTOcesJetqOF8dStfJHAP_l5t9umjMCTgUG8Q4ULTJ7A7lhuwXpggXMUZf-FmBJf'
+client_id = 'XXXXXXXXXXXXXXXXXXXX'
+client_secret = 'XXXXXXXXXXXXXXXX'
+token = 'XXXXXXXXXXXXXXXXXXXXXXX'
 metadata = pd.read_excel('music_metadata pt 2.xlsx')
 
 
