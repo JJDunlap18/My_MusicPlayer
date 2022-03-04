@@ -4,6 +4,7 @@
 - 244 songs from various artists and genres were used to test the recommendation features of the Music Player, with a similarity score being outputted so the user can compare the similarities between different songs
 
 ## Main Python Packages and Tools Used
+- Pycharm
 - tkinter (GUI)
 - pygame (primary music player functions such as pause, play, stop and skip)
 - scikit-learn (calculating Term Frequency-Inverse Document Frequence and cosine similarity for recommender system)
